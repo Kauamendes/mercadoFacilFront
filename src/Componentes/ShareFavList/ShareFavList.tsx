@@ -12,6 +12,13 @@ const ShareFavList: React.FC = () => {
   const resultsByPage = 8;
   const [favorites, setFavorites] = useState<string[]>([]);
 
+  useEffect(() => {
+    const storedFavorites = localStorage.getItem("favorites");
+    if (storedFavorites) {
+      setFavorites(JSON.parse(storedFavorites));
+    }
+  }, []);
+
   const handleToggleFavorite = (symbol: string) => {
     setFavorites((prevFavorites) => {
       const updatedFavorites = prevFavorites.includes(symbol)
@@ -25,10 +32,12 @@ const ShareFavList: React.FC = () => {
 
   useEffect(() => {
     const fetchAcoes = async () => {
+      setLoading(true);
+      setError(null);
+
       try {
-        setLoading(true);
         const fetchedAcoes: AcaoProps[] = [];
-        
+
         for (const f of favorites) {
           const data = await getAcaoPorCodigo(f);
 
@@ -48,13 +57,10 @@ const ShareFavList: React.FC = () => {
       }
     };
 
-    fetchAcoes();
-
-    const storedFavorites = localStorage.getItem("favorites");
-    if (storedFavorites) {
-      setFavorites(JSON.parse(storedFavorites));
+    if (favorites.length > 0) {
+      fetchAcoes();
     }
-  }, [page, resultsByPage, favorites]);
+  }, [favorites]);
 
   const onPageChange = (newPage: number) => {
     setPage(newPage);
