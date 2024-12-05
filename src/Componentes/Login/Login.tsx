@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { LoginData } from "../../Interfaces/LoginData";
-import { LoginAPI } from "../../Servicos/MercadoFacilAPI";
+import {ListarUsuarios, LoginAPI} from "../../Servicos/MercadoFacilAPI";
 
 const Login = () => {
     const [loginData, setLoginData] = useState<LoginData>({
@@ -27,6 +27,16 @@ const Login = () => {
             }
         } catch (e) {
             console.error('Falha no login: ', e);
+        } finally {
+            const response = await ListarUsuarios();
+            const usuario = response.find((user: any) => user.email === loginData.email);
+            localStorage.setItem('usuarioLogado', JSON.stringify(usuario));
+            if (usuario && usuario.observedShares) {
+                const acoesFavoritas = usuario.observedShares.split(',').map((acao: string) => acao.trim());
+                localStorage.setItem('favorites', JSON.stringify(acoesFavoritas));
+            } else {
+                console.warn('Usuário não possui ações favoritas (observedShares).');
+            }
         }
     };
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {buscarAcoes} from "../../Servicos/MercadoFacilAPI";
+import {AtualizarUsuario, buscarAcoes} from "../../Servicos/MercadoFacilAPI";
 import AcaoDisplay from '../ShareDisplay/ShareDisplay';
 import {AcaoProps} from "../../Interfaces/AcaoProps.ts";
 
@@ -12,13 +12,24 @@ const ShareList: React.FC = () => {
   const resultsByPage = 8;
   const [favorites, setFavorites] = useState<string[]>([]);
 
-  const handleToggleFavorite = (symbol: string) => {
+  const handleToggleFavorite = async (symbol: string) => {
     setFavorites((prevFavorites) => {
       const updatedFavorites = prevFavorites.includes(symbol)
           ? prevFavorites.filter((fav) => fav !== symbol)
           : [...prevFavorites, symbol];
 
       localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
+      const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado") || '{}');
+
+      console.log(usuarioLogado);
+      if (usuarioLogado && usuarioLogado.email) {
+        console.log("1")
+        AtualizarUsuario({
+          ...usuarioLogado,
+          observedShares: updatedFavorites.join(',')
+        });
+      }
+
       return updatedFavorites;
     });
   };

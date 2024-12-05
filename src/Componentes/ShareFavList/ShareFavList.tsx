@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getAcaoPorCodigo } from "../../Servicos/MercadoFacilAPI";
+import { AtualizarUsuario, getAcaoPorCodigo } from "../../Servicos/MercadoFacilAPI";
 import AcaoDisplay from "../ShareDisplay/ShareDisplay";
 import { AcaoProps } from "../../Interfaces/AcaoProps.ts";
 
@@ -16,48 +16,62 @@ const ShareFavList: React.FC = () => {
     const storedFavorites = localStorage.getItem("favorites");
     if (storedFavorites) {
       setFavorites(JSON.parse(storedFavorites));
+    } else {
+      setLoading(false);
     }
   }, []);
 
-  const handleToggleFavorite = (symbol: string) => {
+  const handleToggleFavorite = async (symbol: string) => {
     setFavorites((prevFavorites) => {
       const updatedFavorites = prevFavorites.includes(symbol)
           ? prevFavorites.filter((fav) => fav !== symbol)
           : [...prevFavorites, symbol];
 
+      console.log("-1")
       localStorage.setItem("favorites", JSON.stringify(updatedFavorites));
+      const usuarioLogado = JSON.parse(localStorage.getItem("usuarioLogado") || '{}');
+
+      console.log("0")
+      if (usuarioLogado && usuarioLogado.email) {
+        console.log("1")
+        AtualizarUsuario({
+          ...usuarioLogado,
+          observedShares: updatedFavorites.join(',')
+        });
+      }
+
       return updatedFavorites;
     });
   };
 
   useEffect(() => {
-    const fetchAcoes = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const fetchedAcoes: AcaoProps[] = [];
-
-        for (const f of favorites) {
-          const data = await getAcaoPorCodigo(f);
-
-          if (!data || Object.keys(data).length === 0) {
-            setError("Ação não encontrada");
-            return;
-          }
-          fetchedAcoes.push(data);
-        }
-
-        setAcoes(fetchedAcoes);
-        setTotalRecords(fetchedAcoes.length);
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     if (favorites.length > 0) {
+      const fetchAcoes = async () => {
+        setLoading(true);
+        setError(null);
+
+        try {
+          const fetchedAcoes: AcaoProps[] = [];
+
+          for (const f of favorites) {
+            const data = await getAcaoPorCodigo(f);
+
+            if (!data || Object.keys(data).length === 0) {
+              setError("Ação não encontrada");
+              return;
+            }
+            fetchedAcoes.push(data);
+          }
+
+          setAcoes(fetchedAcoes);
+          setTotalRecords(fetchedAcoes.length);
+        } catch (err: any) {
+          setError(err.message);
+        } finally {
+          setLoading(false);
+        }
+      };
+
       fetchAcoes();
     }
   }, [favorites]);
